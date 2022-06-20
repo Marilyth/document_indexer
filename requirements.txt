@@ -1,0 +1,6 @@
+pytesseract
+requests
+opencv-python
+numpy
+matplotlib
+pillow
