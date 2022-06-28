@@ -9,10 +9,20 @@ import math
 import cv2
 import numpy as np
 
+def scan_image(delete_disk_image=False):
+    """
+    Scans and returns image form Brother flatbed scanner. Should be changed for other devices.
+    """
+    subprocess.check_call(["scanimage", "--format=png", "--output-file", "temp.png",  "-l", "1.35466", "-t", "1.35466", "-x", "215.9", "-y", "296.926", "--resolution", "300"])
+    image = open_image("temp.png")
+    if delete_disk_image:
+        os.remove("temp.png")
+    return image
+
 def open_image(path: str):
     return Image.open(path)
 
-def process_image(image: Image.Image, relative_box: tuple = None, use_contour_inversion = False) -> Image.Image:
+def process_image(image: Image.Image, relative_box: tuple = None, use_contour_inversion = False, use_filters = False) -> Image.Image:
     """
     relative_box in this format (relative_left, relative_top, relative_width, relative_height).
     focus_colour is an rgb tuple of the colour of your text to focus on. It will be converted to black, anything else to white.
@@ -25,9 +35,10 @@ def process_image(image: Image.Image, relative_box: tuple = None, use_contour_in
                                                   (bbox[1] + (bbox[-1] - bbox[1]) * (1 - relative_box[1])) + (bbox[-1] - bbox[1]) * relative_box[-1])
     cropped_image = image.crop(crop_box)
     cropped_image = cropped_image.convert("L")
-
-    img = np.asarray(cropped_image, dtype="uint8")
-    img = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 5)
+    
+    if use_filters:
+        img = np.asarray(cropped_image, dtype="uint8")
+        img = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 5)
 
     if use_contour_inversion:
         h, w = img.shape[:2]
@@ -35,19 +46,21 @@ def process_image(image: Image.Image, relative_box: tuple = None, use_contour_in
         for i in range(0, w, 5):
             cv2.floodFill(img, mask, (i, 0), 0)
 
-    cropped_image = Image.fromarray(img)
+    if use_filters:
+        cropped_image = Image.fromarray(img)
 
     draw = ImageDraw.Draw(image)
     draw.rectangle(crop_box, outline="black")
     image.save("selection_showcase.png")
 
-    cropped_image = cropped_image.filter(ImageFilter.SHARPEN)
+    if use_filters:
+        cropped_image = cropped_image.filter(ImageFilter.SHARPEN)
     cropped_image = cropped_image.convert("L")
     cropped_image.save("ai_image_input.png")
 
     return cropped_image
 
-def read_image_text(image: Image.Image, psm: int = 3, oem: int = 3, user_words: list = None) -> str:
+def read_image_text(image: Image.Image, psm: int = 3, oem: int = 3, user_words: list = None, language:str = "eng") -> str:
     """
     relative_box in this format (relative_left, relative_top, relative_width, relative_height).
     focus_colour is an rgb tuple of the colour of your text to focus on. It will be converted to black, anything else to white.
@@ -60,9 +73,12 @@ def read_image_text(image: Image.Image, psm: int = 3, oem: int = 3, user_words: 
     else:
         config = f"--oem {oem} --psm {psm}"
 
-    try:
-        return pytesseract.image_to_string(image, config=config)
-    except pytesseract.TesseractNotFoundError as e:
-        print(e)
-        download_tesseract()
-        return pytesseract.image_to_string(image, config=config)
+    return pytesseract.image_to_string(image, config=config, lang=language)
+
+def image_to_pdf(image: Image.Image, pdf_path: str):
+    """
+    Generates a searchable pdf for the image.
+    """
+    pdf = pytesseract.image_to_pdf_or_hocr(image)
+    with open(pdf_path, "w+b") as f:
+        f.wrtie(pdf)

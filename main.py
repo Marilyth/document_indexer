@@ -8,7 +8,7 @@ from tika import parser as tika_parser
 import requests
 import shutil
 
-def process_file(user_file: str, indexer: Indexer, copy_directory:str = "./index_files", path:str = None, file_name:str = None):
+def process_file(user_file: str, indexer: Indexer, copy_directory:str = "./index_files", path:str = None, file_name:str = None, language:str = "eng"):
     """
     Takes a user provided file input, and stores it in the lucene index.
     This may be a url, an image, a text file or a pdf.
@@ -42,7 +42,7 @@ def process_file(user_file: str, indexer: Indexer, copy_directory:str = "./index
         image = open_image(file_path)
         image = image.convert("RGB")
         processed_image = process_image(image)
-        text = read_image_text(processed_image).strip().replace("|", "I")
+        text = read_image_text(processed_image, language=language).strip().replace("|", "I")
         indexer.store_document(text, path)
         print(f"Saved imaged with text:\n{text}")
         return
@@ -76,23 +76,37 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--command', type=str, default="store", help="Whether to [store] or [query] the index.")
     parser.add_argument("--files", type=str, help="The path to the files to be stored in the index, can also be a url, seperated by commas. May be a .txt file, an image or a .pdf.\nMultiple files will point to each other in the path field.")
+    parser.add_argument("--from-scanner", type=bool, default=False, help="Whether to use the scanner and add the image to the index.")
     parser.add_argument("--query", type=str, help="The Lucene query to apply to the index.")
+    parser.add_argument("--search", type=str, help="The text to search for in the index. Overwrites --query.")
+    parser.add_argument("--language", type=str, default="eng", help="The language of the image. Defaults to eng.")
     args = parser.parse_args()
 
+    search_engine = Indexer()
+
+    if args.search:
+        text_query = "(" + " AND ".join([f"text:{word}" for word in args.search.split(" ")]) + "*)"
+        stemmed_text_query = "(" + " AND ".join([f"stemmed_text:{word}" for word in args.search.split(" ")]) + "*)"
+        stemmed_query = "(" + " AND ".join([f"stemmed_text:{search_engine.stem_text(word)}" for word in args.search.split(" ")]) + "*)"
+        args.query = f"{text_query} OR {stemmed_text_query} OR {stemmed_query}"
     if not os.path.isdir("./index_files"):
         os.mkdir("./index_files")
 
-    search_engine = Indexer()
     if args.command == "store" and not args.query:
         print("Storing to index...")
 
         file_name_prefix = datetime.now().strftime("%d-%m-%Y-%H-%M-%S.%f")
 
+        if args.from_scanner:
+            args.files = "temp.png"
+            scan_image()
+            
         if args.files:
             paths = ",".join([f"{file_name_prefix}_{i}" for i, file in enumerate(args.files.split(","))])
             for i, user_file in enumerate(args.files.split(",")):
-                process_file(user_file, search_engine, file_name=f"{file_name_prefix}_{i}", path=paths)
+                process_file(user_file, search_engine, file_name=f"{file_name_prefix}_{i}", path=paths, language=args.language)
 
     elif args.command == "query" or args.query:
+        print(f"Searching for query: {args.query}")
         for result in search_engine.search_document(args.query):
             print(f"Score: {result[1]}, Matched {result[0]['path']} ({result[0]['date']}):\n{result[0]['text']}")

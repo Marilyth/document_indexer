@@ -4,7 +4,7 @@
 import os
 from datetime import datetime
 import lucene
-from nltk.stem import PorterStemmer
+from nltk.stem import LancasterStemmer
 from nltk.tokenize import word_tokenize
 import nltk
 
@@ -32,7 +32,7 @@ class Indexer:
         self.config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND)
         self.writer = IndexWriter(self.store, self.config)
         self.searcher = None
-        self.stemmer = PorterStemmer()
+        self.stemmer = LancasterStemmer()
         try:
             nltk.data.find('tokenizers/punkt')
         except LookupError:
