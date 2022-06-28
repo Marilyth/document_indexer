@@ -12,7 +12,7 @@ import numpy as np
 def open_image(path: str):
     return Image.open(path)
 
-def process_image(image: Image.Image, relative_box: tuple[int, int, int, int] = None, use_contour_inversion = False) -> Image.Image:
+def process_image(image: Image.Image, relative_box: tuple = None, use_contour_inversion = False) -> Image.Image:
     """
     relative_box in this format (relative_left, relative_top, relative_width, relative_height).
     focus_colour is an rgb tuple of the colour of your text to focus on. It will be converted to black, anything else to white.
@@ -47,7 +47,7 @@ def process_image(image: Image.Image, relative_box: tuple[int, int, int, int] = 
 
     return cropped_image
 
-def read_image_text(image: Image.Image, psm: int = 3, oem: int = 3, user_words: list[str] = None) -> str:
+def read_image_text(image: Image.Image, psm: int = 3, oem: int = 3, user_words: list = None) -> str:
     """
     relative_box in this format (relative_left, relative_top, relative_width, relative_height).
     focus_colour is an rgb tuple of the colour of your text to focus on. It will be converted to black, anything else to white.
