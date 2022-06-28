@@ -18,7 +18,7 @@ def process_file(user_file: str, indexer: Indexer, copy_directory:str = "./index
 
     if not file_name:
         file_name = datetime.now().strftime("%d-%m-%Y-%H-%M-%S.%f")
-        
+
     file_path = os.path.join(copy_directory, file_name)
 
     if not path:
@@ -92,4 +92,4 @@ if __name__ == "__main__":
 
     elif args.command == "query":
         for result in search_engine.search_document(args.query):
-            print(f"Score: {result[1]}, Matched {result[0]['path']} ({result[0]['date']}): {result[0]['text']}")
+            print(f"Score: {result[1]}, Matched {result[0]['path']} ({result[0]['date']}):\n{result[0]['text']}")

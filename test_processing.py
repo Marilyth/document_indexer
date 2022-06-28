@@ -11,6 +11,8 @@ class Test_Indexer(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.search_engine = Indexer("./test_index")
+        if not os.path.isdir("./test_index_files"):
+            os.mkdir("./test_index_files")
 
     @classmethod
     def tearDownClass(cls):
