@@ -40,8 +40,9 @@ def process_file(user_file: str, indexer: Indexer, copy_directory:str = "./index
     try:
         print("Trying image parsing...")
         image = open_image(file_path)
+        image = image.convert("RGB")
         processed_image = process_image(image)
-        text = read_image_text(processed_image).strip()
+        text = read_image_text(processed_image).strip().replace("|", "I")
         indexer.store_document(text, path)
         print(f"Saved imaged with text:\n{text}")
         return
@@ -62,7 +63,7 @@ def process_file(user_file: str, indexer: Indexer, copy_directory:str = "./index
     # Try .pdf parsing.
     try:
         parsed_pdf = tika_parser.from_file(file_path)
-        text = parsed_pdf["content"].encode('ascii', errors='ignore').strip()
+        text = parsed_pdf["content"].encode('ascii', errors='ignore').strip().replace("|", "I")
         indexer.store_document(text, path)
         print(f"Saved pdf with text:\n{text}")
         return
@@ -80,7 +81,7 @@ if __name__ == "__main__":
         os.mkdir("./index_files")
 
     search_engine = Indexer()
-    if args.command == "store":
+    if args.command == "store" and not args.query:
         print("Storing to index...")
 
         file_name_prefix = datetime.now().strftime("%d-%m-%Y-%H-%M-%S.%f")
@@ -90,6 +91,6 @@ if __name__ == "__main__":
             for i, user_file in enumerate(args.files.split(",")):
                 process_file(user_file, search_engine, file_name=f"{file_name_prefix}_{i}", path=paths)
 
-    elif args.command == "query":
+    elif args.command == "query" or args.query:
         for result in search_engine.search_document(args.query):
             print(f"Score: {result[1]}, Matched {result[0]['path']} ({result[0]['date']}):\n{result[0]['text']}")
