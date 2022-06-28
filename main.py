@@ -4,11 +4,13 @@ from textreader import *
 import argparse
 import os
 from datetime import datetime
-import tika
+from tika import parser as tika_parser
+import requests
+import shutil
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--command', type=str, default="store", help="Whether to [store] or [query] the index.")
-parser.add_argument("--files", type=str, help="The path to the files to be stored in the index, can also be a url, seperated by commas. May be a text file, an image or a pdf.")
+parser.add_argument("--files", type=str, help="The path to the files to be stored in the index, can also be a url, seperated by commas. May be a .txt file, an image or a .pdf.")
 parser.add_argument("--query", type=str, help="The Lucene query to apply to the index.")
 args = parser.parse_args()
 
@@ -19,8 +21,50 @@ search_engine = Indexer()
 if args.command == "store":
     if args.files:
         for user_file in args.files.split(","):
-            with open() as f:
-                f.write()
-        search_engine.store_document("some test text", "./images/text_image.jpg")
-else if args.command == "query"
-    print(search_engine.search_document(args.query))
+            file_name = datetime.now().strftime("%d-%m-%Y-%H-%M-%S.%f")
+            file_path = os.path.join("./index_files", file_name)
+
+            # Download from url.
+            if user_file.startswith("http"):
+                file_content = requests.get(user_file).content
+                with open(file_path, "wb") as temp_file:
+                    temp_file.write(file_content)
+
+            # Copy from local.
+            elif os.path.exists(user_file):
+                shutil.copy2(user_file, file_path)
+
+            # Try .pdf parsing.
+            try:
+                parsed_pdf = tika_parser.from_file(file_path)
+                text = parsed_pdf["content"].encode('ascii', errors='ignore')
+                search_engine.store_document(text, file_path)
+                print(f"Saved pdf with text:\n{text}")
+                exit()
+            except Exception as e:
+                print(e)
+
+            # Try image parsing.
+            try:
+                image = open_image(file_path)
+                processed_image = process_image(image)
+                text = read_image_text(processed_image)
+                search_engine.store_document(text, file_path)
+                print(f"Saved imaged with text:\n{text}")
+                exit()
+            except Exception as e:
+                print(e)
+
+            # Try raw text parsing.
+            try:
+                with open(file_path, "r") as f:
+                    text = f.read()
+                    search_engine.store_document(text, file_path)
+                    print(f"Saved textfile with text:\n{text}")
+                    exit()
+            except Exception as e:
+                print(e)
+
+elif args.command == "query":
+    for result in search_engine.search_document(args.query):
+        print(f"Score: {result[1]}, Matched {result[0]['date']} ({result[0]['date']}): {result[0]['text']}")
