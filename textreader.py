@@ -9,18 +9,8 @@ import math
 import cv2
 import numpy as np
 
-pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-
-def download_tesseract():
-    print("Downloading tesseract...")
-    file_content = requests.get("https://digi.bib.uni-mannheim.de/tesseract/tesseract-ocr-w64-setup-v5.1.0.20220510.exe")
-
-    with open("tesseract_installer.exe", "wb") as f:
-        f.write(file_content.content)
-
-    print("Install tesseract. Please keep everything default!")
-    subprocess.check_call(["tesseract_installer.exe"], shell=True)
-    os.remove("tesseract_installer.exe")
+def open_image(path: str):
+    return Image.open(path)
 
 def process_image(image: Image.Image, relative_box: tuple[int, int, int, int] = None, use_contour_inversion = False) -> Image.Image:
     """
