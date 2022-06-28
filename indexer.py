@@ -17,9 +17,9 @@ from org.apache.lucene.index import DirectoryReader
 from org.apache.lucene.queryparser.classic import QueryParser
 
 class Indexer:
-    def __init__(self):
+    def __init__(self, path="./index"):
         lucene.initVM(vmargs=['-Djava.awt.headless=true'])
-        self.store = FSDirectory.open(Paths.get("./index"))
+        self.store = FSDirectory.open(Paths.get(path))
         analyzer = StandardAnalyzer()
         self.analyzer = LimitTokenCountAnalyzer(analyzer, 1048576)
         self.config = IndexWriterConfig(self.analyzer)
