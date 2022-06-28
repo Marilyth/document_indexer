@@ -49,6 +49,18 @@ def process_file(user_file: str, indexer: Indexer, copy_directory:str = "./index
     except Exception as e:
         print(e)
 
+    if ".pdf" in user_file:
+        # Try .pdf parsing.
+        try:
+            print("Trying pdf parsing...")
+            parsed_pdf = tika_parser.from_file(file_path)
+            text = parsed_pdf["content"].encode('ascii', errors='ignore').decode("utf-8").strip().replace("|", "I")
+            indexer.store_document(text, path)
+            print(f"Saved pdf with text:\n{text}")
+            return
+        except Exception as e:
+            print(e)
+
     # Try raw text parsing.
     try:
         print("Trying text parsing...")
@@ -57,16 +69,6 @@ def process_file(user_file: str, indexer: Indexer, copy_directory:str = "./index
             indexer.store_document(text, path)
             print(f"Saved textfile with text:\n{text}")
             return
-    except Exception as e:
-        print(e)
-
-    # Try .pdf parsing.
-    try:
-        parsed_pdf = tika_parser.from_file(file_path)
-        text = parsed_pdf["content"].encode('ascii', errors='ignore').strip().replace("|", "I")
-        indexer.store_document(text, path)
-        print(f"Saved pdf with text:\n{text}")
-        return
     except Exception as e:
         print(e)
 
