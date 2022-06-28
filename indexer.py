@@ -6,6 +6,7 @@ from datetime import datetime
 import lucene
 from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
+import nltk
 
 from java.nio.file import Paths
 from org.apache.lucene.analysis.miscellaneous import LimitTokenCountAnalyzer
@@ -32,6 +33,11 @@ class Indexer:
         self.writer = IndexWriter(self.store, self.config)
         self.searcher = None
         self.stemmer = PorterStemmer()
+        try:
+            nltk.data.find('tokenizers/punkt')
+        except LookupError:
+            print("Downloading punkt...")
+            nltk.download('punkt')
 
     def store_document(self, text, source_path, creation_time=None):
         if not creation_time:
