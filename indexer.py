@@ -17,6 +17,9 @@ from org.apache.lucene.index import DirectoryReader
 from org.apache.lucene.queryparser.classic import QueryParser
 
 class Indexer:
+    """
+    A pylucene wrapper for creating and querying an index.
+    """
     def __init__(self, path="./index"):
         lucene.initVM(vmargs=['-Djava.awt.headless=true'])
         self.store = FSDirectory.open(Paths.get(path))
