@@ -6,3 +6,4 @@ matplotlib
 pillow
 pytest
 tika
+nltk

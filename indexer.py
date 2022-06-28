@@ -4,6 +4,8 @@
 import os
 from datetime import datetime
 import lucene
+from nltk.stem import PorterStemmer
+from nltk.tokenize import word_tokenize
 
 from java.nio.file import Paths
 from org.apache.lucene.analysis.miscellaneous import LimitTokenCountAnalyzer
@@ -29,6 +31,7 @@ class Indexer:
         self.config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND)
         self.writer = IndexWriter(self.store, self.config)
         self.searcher = None
+        self.stemmer = PorterStemmer()
 
     def store_document(self, text, source_path, creation_time=None):
         if not creation_time:
@@ -39,6 +42,11 @@ class Indexer:
         text_field.setTokenized(True)
         text_field.setStored(True)
         text_field.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS)
+
+        stemmed_text_field = FieldType()
+        stemmed_text_field.setTokenized(True)
+        stemmed_text_field.setStored(True)
+        stemmed_text_field.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS)
 
         date_field = FieldType()
         date_field.setTokenized(True)
@@ -51,6 +59,7 @@ class Indexer:
         path_field.setIndexOptions(IndexOptions.DOCS_AND_FREQS)
 
         document.add(Field("text", text, text_field))
+        document.add(Field("stemmed_text", self.stem_text(text), stemmed_text_field))
         document.add(Field("path", source_path, path_field))
         document.add(Field("date", creation_time, date_field))
         self.writer.addDocument(document)
@@ -64,3 +73,6 @@ class Indexer:
         score_docs = self.searcher.search(lucene_query, 50).scoreDocs
 
         return [(self.searcher.doc(score_doc.doc), score_doc.score) for score_doc in score_docs]
+
+    def stem_text(self, text) -> str:
+        return " ".join([self.stemmer.stem(word) for word in word_tokenize(text)])
