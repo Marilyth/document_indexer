@@ -72,13 +72,15 @@ class Indexer:
         self.writer.commit()
 
     def search_document(self, query, default_field="text"):
-        if not self.searcher:
-            self.searcher = IndexSearcher(DirectoryReader.open(self.store))
+        self.searcher = IndexSearcher(DirectoryReader.open(self.store))
 
-        lucene_query = QueryParser(default_field, self.analyzer).parse(f"{query}")
+        lucene_query = QueryParser(default_field, self.analyzer)
+        lucene_query.setAllowLeadingWildcard(True)
+        lucene_query = lucene_query.parse(f"{query}")
+
         score_docs = self.searcher.search(lucene_query, 50).scoreDocs
 
-        return [(self.searcher.doc(score_doc.doc), score_doc.score) for score_doc in score_docs]
+        return [(self.searcher.doc(score_doc.doc), score_doc.score, score_doc.doc) for score_doc in score_docs if score_doc.score > 1]
 
     def stem_text(self, text) -> str:
         return " ".join([self.stemmer.stem(word) for word in word_tokenize(text)])
