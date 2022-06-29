@@ -1,6 +1,8 @@
 from crypt import methods
 from flask import Flask, request, send_from_directory
 from threading import Thread
+
+from numpy import append
 from indexer import Indexer
 from textreader import *
 from datetime import datetime
@@ -16,12 +18,20 @@ def get_scan_page(relative_reverse_one=True):
     new_scan_href = f"<a href=/scan/new>New scan</a>"
     append_scan_href = f"<a href=/scan/append>Append to current scan</a>"
     finish_scan_href = f"<a href=/scan/finish>Finish scan</a>"
+    redo_scan_href = f"<a href=/scan/redo>Redo scan</a>"
     abort_scan_href = f"<a href=/scan/abort>Abort scan</a>"
 
     if len(current_scan) > 0:
-        return " ".join([append_scan_href, finish_scan_href, abort_scan_href])
+        current_scan_text = f"<br><br><b>Current scan text:</b><br>{current_scan[-1][1]}"
+        return " ".join([append_scan_href, finish_scan_href, redo_scan_href, abort_scan_href, current_scan_text])
     else:
         return " ".join([new_scan_href])
+
+@api.route("/scan/redo", methods=["GET"])
+def redo_last_scan():
+    global current_scan
+    current_scan = current_scan[:-1]
+    return append_to_scan()
 
 @api.route("/scan/new", methods=["GET"])
 def begin_new_scan():
@@ -97,9 +107,11 @@ def get_document(document_id):
     print(f"Requested {document_path}")
     return send_from_directory(directory="./", path=document_path)
 
+def run_api():
+    api.run(host="0.0.0.0")
 
 def start_server(lang:str = "deu"):
     global language
     language = lang
     print("Starting server...")
-    Thread(target=api.run).start()
+    Thread(target=run_api).start()
