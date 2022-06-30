@@ -18,7 +18,7 @@ def process_file(user_file: str, indexer: Indexer, copy_directory:str = "./index
     print(f"Processing {user_file}...")
 
     if not file_name:
-        file_name = datetime.now().strftime("%d-%m-%Y-%H-%M-%S.%f")
+        file_name = datetime.now().strftime("%Y-%m-%d-%H-%M-%S.%f")
 
     file_path = os.path.join(copy_directory, file_name)
 
@@ -106,7 +106,7 @@ if __name__ == "__main__":
     if args.command == "store" and not args.query:
         print("Storing to index...")
 
-        file_name_prefix = datetime.now().strftime("%d-%m-%Y-%H-%M-%S.%f")
+        file_name_prefix = datetime.now().strftime("%Y-%m-%d-%H-%M-%S.%f")
 
         if args.from_scanner:
             args.files = "temp.png"

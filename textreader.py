@@ -13,7 +13,7 @@ def scan_image(delete_disk_image=False):
     """
     Scans and returns image form Brother flatbed scanner. Should be changed for other devices.
     """
-    subprocess.check_call(["scanimage", "--format=png", "--output-file", "temp.png",  "-l", "1.35466", "-t", "1.35466", "-x", "215.9", "-y", "296.926", "--resolution", "300"])
+    subprocess.check_call(["scanimage", "--format=png", "--output-file", "temp.png",  "-l", "1.35466", "-t", "1.35466", "-x", "215.9", "-y", "296.926", "--resolution", "300", "--mode", "Color"])
     image = open_image("temp.png")
     if delete_disk_image:
         os.remove("temp.png")

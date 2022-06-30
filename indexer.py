@@ -41,7 +41,7 @@ class Indexer:
 
     def store_document(self, text, source_path, creation_time=None):
         if not creation_time:
-            creation_time = datetime.now().strftime("%d-%m-%Y %H-%M-%S")
+            creation_time = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
         document = Document()
 
         text_field = FieldType()
