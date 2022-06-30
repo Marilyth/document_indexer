@@ -3,6 +3,7 @@ from flask import Flask, request, send_from_directory
 from threading import Thread
 
 from numpy import append
+from py import process
 from indexer import Indexer
 from textreader import *
 from datetime import datetime
@@ -36,17 +37,19 @@ def redo_last_scan():
 @api.route("/scan/new", methods=["GET"])
 def begin_new_scan():
     global current_file_name, current_scan
-    current_file_name = datetime.now().strftime("%d-%m-%Y-%H-%M-%S.%f.pdf")
-    image = process_image(scan_image().convert("RGB"))
-    current_scan = [(image, read_image_text(image, language=language))]
+    current_file_name = datetime.now().strftime("%Y-%m-%d-%H-%M-%S.%f.pdf")
+    image = scan_image().convert("RGB")
+    processed_image =  process_image(image)
+    current_scan = [(image, read_image_text(processed_image, language=language))]
 
     return f"Scanned {len(current_scan)} page<br>{get_scan_page()}"
 
 @api.route("/scan/append", methods=["GET"])
 def append_to_scan():
     global current_scan
-    image = process_image(scan_image().convert("RGB"))
-    current_scan.append((image, read_image_text(image, language=language)))
+    image = scan_image().convert("RGB")
+    processed_image =  process_image(image)
+    current_scan.append((image, read_image_text(processed_image, language=language)))
 
     return f"Scanned {len(current_scan)} pages<br>{get_scan_page()}"
 
